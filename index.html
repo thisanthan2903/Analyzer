@@ -73,7 +73,7 @@
     </main>
 
     <script>
-        // Theme Logic
+        // --- 1. THEME LOGIC (Keep this) ---
         const themeBtn = document.getElementById('theme-toggle');
         const themeIcon = document.getElementById('theme-icon');
         
@@ -93,33 +93,101 @@
             }
         });
 
-        // File and UI logic mockup (Connect to real backend later)
+        // --- 2. REAL PRODUCTION API CONNECTION ---
+        const API_BASE_URL = "https://analyzer-server-ym5x.onrender.com";
+        
         const fileInput = document.getElementById('file-input');
         const processBtn = document.getElementById('process-btn');
         const summaryBox = document.getElementById('summary-box');
+        const summaryContent = document.getElementById('summary-content');
         const chatBox = document.getElementById('chat-box');
         const queryInput = document.getElementById('query-input');
         const sendBtn = document.getElementById('send-btn');
 
+        // Show process button when file is selected
         fileInput.addEventListener('change', (e) => {
             if(e.target.files.length > 0) processBtn.classList.remove('hidden');
         });
 
-        processBtn.addEventListener('click', () => {
-            processBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing Data...';
-            // MOCKUP: In reality, you send the file to your Python backend here via fetch()
-            setTimeout(() => {
-                processBtn.classList.add('hidden');
-                summaryBox.classList.remove('hidden');
-                document.getElementById('summary-content').innerHTML = `
-                    <p><i class="fas fa-file-pdf text-red-500 mr-2"></i> <strong>Report.pdf:</strong> 12 pages parsed.</p>
-                    <p><i class="fas fa-file-excel text-green-500 mr-2"></i> <strong>Finance.xlsx:</strong> 4 columns found (Date, Revenue, Cost, Profit).</p>
-                    <p class="text-xs text-blue-500 mt-2"><i class="fas fa-check-circle mr-1"></i> Data ready for Q&A.</p>
-                `;
-                chatBox.innerHTML = '<div class="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 p-3 rounded-lg max-w-[80%] mb-2">Data indexed successfully. What would you like to know?</div>';
-                queryInput.disabled = false;
-                sendBtn.disabled = false;
-            }, 2000);
+        // Upload the Zip File to Render
+        processBtn.addEventListener('click', async () => {
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            processBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Waking Server & Uploading...';
+            processBtn.disabled = true;
+
+            const formData = new FormData();
+            formData.append("file", file);
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+
+                if (data.status === "success") {
+                    processBtn.classList.add('hidden');
+                    summaryBox.classList.remove('hidden');
+                    
+                    // Generate Summary HTML dynamically based on backend response
+                    let html = "";
+                    data.summary.forEach(item => {
+                        if (item.type === "PDF") {
+                            html += `<p><i class="fas fa-file-pdf text-red-500 mr-2"></i> <strong>${item.file}:</strong> ${item.pages} pages parsed.</p>`;
+                        } else {
+                            html += `<p><i class="fas fa-table text-green-500 mr-2"></i> <strong>${item.file}:</strong> ${item.rows} rows. Columns: ${item.schema.join(', ')}</p>`;
+                        }
+                    });
+                    html += `<p class="text-xs text-blue-500 mt-2"><i class="fas fa-check-circle mr-1"></i> Data cube ready for Q&A.</p>`;
+                    summaryContent.innerHTML = html;
+
+                    chatBox.innerHTML = '<div class="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 p-3 rounded-lg max-w-[80%] mb-2">Data indexed successfully. What would you like to know?</div>';
+                    queryInput.disabled = false;
+                    sendBtn.disabled = false;
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                processBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Upload Failed. Try Again.';
+                processBtn.disabled = false;
+            }
+        });
+
+        // Send Question to Render AI
+        sendBtn.addEventListener('click', async () => {
+            const question = queryInput.value.trim();
+            if (!question) return;
+
+            // Add user message to chat UI
+            chatBox.innerHTML += `<div class="bg-slate-200 dark:bg-slate-700 p-3 rounded-lg max-w-[80%] ml-auto mb-2 text-right">${question}</div>`;
+            queryInput.value = '';
+            
+            // Add loading indicator
+            const loadingId = 'loading-' + Date.now();
+            chatBox.innerHTML += `<div id="${loadingId}" class="text-slate-400 p-3"><i class="fas fa-circle-notch fa-spin"></i> AI is thinking...</div>`;
+            chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll to bottom
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/ask?query=${encodeURIComponent(question)}`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+
+                // Remove loading indicator and add AI answer
+                document.getElementById(loadingId).remove();
+                chatBox.innerHTML += `<div class="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 p-3 rounded-lg max-w-[80%] mb-2">${data.answer}</div>`;
+                chatBox.scrollTop = chatBox.scrollHeight;
+
+            } catch (error) {
+                document.getElementById(loadingId).innerHTML = '<span class="text-red-500">Error connecting to AI.</span>';
+            }
+        });
+
+        // Allow pressing Enter to send question
+        queryInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendBtn.click();
         });
     </script>
 </body>
