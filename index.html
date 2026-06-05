@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zip RAG - Multiformat Analyzer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class' }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 transition-colors duration-300 min-h-screen flex flex-col">
+
+    <!-- Navigation -->
+    <nav class="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-950">
+        <h1 class="text-xl font-bold text-blue-600 dark:text-blue-400"><i class="fas fa-file-zipper mr-2"></i>Zip RAG Engine</h1>
+        <button id="theme-toggle" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700">
+            <i id="theme-icon" class="fas fa-moon"></i>
+        </button>
+    </nav>
+
+    <main class="flex-grow p-4 max-w-6xl mx-auto w-full grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+        
+        <!-- Left Panel: Upload & Summary -->
+        <div class="col-span-1 space-y-6">
+            <!-- Upload Box -->
+            <div class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm text-center">
+                <h2 class="text-lg font-bold mb-4">1. Upload Archive</h2>
+                <div class="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-8 hover:border-blue-500 transition">
+                    <i class="fas fa-cloud-upload-alt text-3xl text-slate-400 mb-2"></i>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">Drag & drop your .zip file here containing PDF, CSV, or XLSX files.</p>
+                    <input type="file" id="file-input" accept=".zip" class="hidden">
+                    <button onclick="document.getElementById('file-input').click()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow text-sm font-medium">
+                        Browse Files
+                    </button>
+                </div>
+                <button id="process-btn" class="w-full mt-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow text-sm font-medium hidden">
+                    Process Data Cube
+                </button>
+            </div>
+
+            <!-- Data Summary Box -->
+            <div id="summary-box" class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hidden">
+                <h2 class="text-lg font-bold mb-4 border-b border-slate-200 dark:border-slate-700 pb-2">Data Summary</h2>
+                <div id="summary-content" class="text-sm space-y-3 text-slate-600 dark:text-slate-300">
+                    <!-- Dynamic content injected here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Q&A Interface -->
+        <div class="col-span-1 md:col-span-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col h-[600px]">
+            <div class="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 rounded-t-xl">
+                <h2 class="text-lg font-bold">2. Document Q&A</h2>
+                <p class="text-xs text-slate-500">Ask questions. AI will only answer based on the uploaded data.</p>
+            </div>
+            
+            <div id="chat-box" class="flex-grow p-4 overflow-y-auto space-y-4">
+                <div class="flex flex-col items-center justify-center h-full text-slate-400">
+                    <i class="fas fa-robot text-4xl mb-2"></i>
+                    <p>Upload a zip file to start asking questions.</p>
+                </div>
+            </div>
+
+            <div class="p-4 border-t border-slate-200 dark:border-slate-700 flex gap-2">
+                <input type="text" id="query-input" placeholder="e.g., What is the total revenue in the Excel file?" class="flex-grow p-2 rounded border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500" disabled>
+                <button id="send-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded font-medium disabled:opacity-50" disabled>
+                    Ask
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Theme Logic
+        const themeBtn = document.getElementById('theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
+        
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+            themeIcon.className = 'fas fa-sun text-yellow-400';
+        }
+
+        themeBtn.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            if (document.documentElement.classList.contains('dark')) {
+                localStorage.theme = 'dark';
+                themeIcon.className = 'fas fa-sun text-yellow-400';
+            } else {
+                localStorage.theme = 'light';
+                themeIcon.className = 'fas fa-moon text-slate-700';
+            }
+        });
+
+        // File and UI logic mockup (Connect to real backend later)
+        const fileInput = document.getElementById('file-input');
+        const processBtn = document.getElementById('process-btn');
+        const summaryBox = document.getElementById('summary-box');
+        const chatBox = document.getElementById('chat-box');
+        const queryInput = document.getElementById('query-input');
+        const sendBtn = document.getElementById('send-btn');
+
+        fileInput.addEventListener('change', (e) => {
+            if(e.target.files.length > 0) processBtn.classList.remove('hidden');
+        });
+
+        processBtn.addEventListener('click', () => {
+            processBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing Data...';
+            // MOCKUP: In reality, you send the file to your Python backend here via fetch()
+            setTimeout(() => {
+                processBtn.classList.add('hidden');
+                summaryBox.classList.remove('hidden');
+                document.getElementById('summary-content').innerHTML = `
+                    <p><i class="fas fa-file-pdf text-red-500 mr-2"></i> <strong>Report.pdf:</strong> 12 pages parsed.</p>
+                    <p><i class="fas fa-file-excel text-green-500 mr-2"></i> <strong>Finance.xlsx:</strong> 4 columns found (Date, Revenue, Cost, Profit).</p>
+                    <p class="text-xs text-blue-500 mt-2"><i class="fas fa-check-circle mr-1"></i> Data ready for Q&A.</p>
+                `;
+                chatBox.innerHTML = '<div class="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 p-3 rounded-lg max-w-[80%] mb-2">Data indexed successfully. What would you like to know?</div>';
+                queryInput.disabled = false;
+                sendBtn.disabled = false;
+            }, 2000);
+        });
+    </script>
+</body>
+</html>
