@@ -4,15 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Zip RAG - Multiformat Analyzer</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = { darkMode: 'class' }
-    </script>
+    
+    <link href="./output.css" rel="stylesheet">
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 transition-colors duration-300 min-h-screen flex flex-col">
 
-    <!-- Navigation -->
     <nav class="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-950">
         <h1 class="text-xl font-bold text-blue-600 dark:text-blue-400"><i class="fas fa-file-zipper mr-2"></i>Zip RAG Engine</h1>
         <button id="theme-toggle" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700">
@@ -22,9 +20,7 @@
 
     <main class="flex-grow p-4 max-w-6xl mx-auto w-full grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
         
-        <!-- Left Panel: Upload & Summary -->
         <div class="col-span-1 space-y-6">
-            <!-- Upload Box -->
             <div class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm text-center">
                 <h2 class="text-lg font-bold mb-4">1. Upload Archive</h2>
                 <div class="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-8 hover:border-blue-500 transition">
@@ -40,16 +36,13 @@
                 </button>
             </div>
 
-            <!-- Data Summary Box -->
             <div id="summary-box" class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hidden">
                 <h2 class="text-lg font-bold mb-4 border-b border-slate-200 dark:border-slate-700 pb-2">Data Summary</h2>
                 <div id="summary-content" class="text-sm space-y-3 text-slate-600 dark:text-slate-300">
-                    <!-- Dynamic content injected here -->
-                </div>
+                    </div>
             </div>
         </div>
 
-        <!-- Right Panel: Q&A Interface -->
         <div class="col-span-1 md:col-span-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col h-[600px]">
             <div class="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 rounded-t-xl">
                 <h2 class="text-lg font-bold">2. Document Q&A</h2>
@@ -73,7 +66,7 @@
     </main>
 
     <script>
-        // --- 1. THEME LOGIC (Keep this) ---
+        // --- 1. THEME LOGIC ---
         const themeBtn = document.getElementById('theme-toggle');
         const themeIcon = document.getElementById('theme-icon');
         
@@ -104,12 +97,10 @@
         const queryInput = document.getElementById('query-input');
         const sendBtn = document.getElementById('send-btn');
 
-        // Show process button when file is selected
         fileInput.addEventListener('change', (e) => {
             if(e.target.files.length > 0) processBtn.classList.remove('hidden');
         });
 
-        // Upload the Zip File to Render
         processBtn.addEventListener('click', async () => {
             const file = fileInput.files[0];
             if (!file) return;
@@ -132,7 +123,6 @@
                     processBtn.classList.add('hidden');
                     summaryBox.classList.remove('hidden');
                     
-                    // Generate Summary HTML dynamically based on backend response
                     let html = "";
                     data.summary.forEach(item => {
                         if (item.type === "PDF") {
@@ -155,19 +145,16 @@
             }
         });
 
-        // Send Question to Render AI
         sendBtn.addEventListener('click', async () => {
             const question = queryInput.value.trim();
             if (!question) return;
 
-            // Add user message to chat UI
             chatBox.innerHTML += `<div class="bg-slate-200 dark:bg-slate-700 p-3 rounded-lg max-w-[80%] ml-auto mb-2 text-right">${question}</div>`;
             queryInput.value = '';
             
-            // Add loading indicator
             const loadingId = 'loading-' + Date.now();
             chatBox.innerHTML += `<div id="${loadingId}" class="text-slate-400 p-3"><i class="fas fa-circle-notch fa-spin"></i> AI is thinking...</div>`;
-            chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll to bottom
+            chatBox.scrollTop = chatBox.scrollHeight;
 
             try {
                 const response = await fetch(`${API_BASE_URL}/ask?query=${encodeURIComponent(question)}`, {
@@ -175,7 +162,6 @@
                 });
                 const data = await response.json();
 
-                // Remove loading indicator and add AI answer
                 document.getElementById(loadingId).remove();
                 chatBox.innerHTML += `<div class="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 p-3 rounded-lg max-w-[80%] mb-2">${data.answer}</div>`;
                 chatBox.scrollTop = chatBox.scrollHeight;
@@ -185,7 +171,6 @@
             }
         });
 
-        // Allow pressing Enter to send question
         queryInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') sendBtn.click();
         });
